@@ -1,0 +1,155 @@
+%Nome: Guilherme Navarro
+%Número USP: 8943160
+%Turma: Noturna
+%Curso: Laboratório de Computação e Simulação
+
+\documentclass{article} %documento do tipo artigo
+\usepackage[brazil]{babel} %gera datas e nomes como capítulo, bibliografia em português com estilo brasileiro
+\usepackage{latexsym}
+\usepackage[utf8]{inputenc} %os acentos são digitados diretamente pelo teclado
+\usepackage{graphicx} %permite incluir figuras
+\frenchspacing
+\usepackage{indentfirst}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{color}
+
+\begin{document}
+
+\title{EP5 - Simulação do teste de significância completamente bayesiano(FBST)} %título do EP
+\author{Guilherme Navarro - 8943160} %autor do documento
+\date{Junho de 2018} %data 
+
+\maketitle	
+
+	
+\section{O Problema}
+	Uma empresa compra um lote de painéis de LED usados. Todos os painéis do lote estão funcionando no momento da compra. Um painel falha quando o primeiro LED falha. O fornecedor informa à empresa o tempo de uso de cada maquina ($\alpha$) e a média de vida dos painéis para cada máquina ($\mu$). Apesar do tempo de vida dos painéis depender da máquina em que foi instalada, é possível utilizar uma medida de desgaste que é intrínseca ao painel: a razão do tempo de uso sobre a vida média, isto é: 
+	
+\begin{equation}
+\rho = \frac{\alpha}{\mu}
+\end{equation}
+    
+\subsection{Objetivo}
+	O objetivo desta simulação é testar se essa informação dada pelo fabricante é verdadeira ou não para o conjunto \textbf{D} da tabela abaixo de tempos de vida de painéis de LED, ou seja, queremos verificar a veracidade $\rho$. Para isso usaremos o teste de significância totalmente bayesiano (FBST - \textit{Full Bayesian Significant Test}), que é o equivalente ao teste de determinação de \textit{p-values} na estatística frequentista. 
+    
+\begin{table}
+\centering
+\caption{Dados do tempo de falha e não falhas (+)}
+\begin{tabular}{llllllllll}
+\hline
+0.01 & 0.19 & 0.51 & 0.57 & 0.70 & 0.73 & 0.75 & 0.75 & 1.11 & 1.16 \\
+1.21 & 1.22 & 1.24 & 1.48 & 1.54 & 1.59 & 1.61 & 1.61 & 1.62 & 1.62 \\
+1.71 & 1.75 & 1.77 & 1.79 & 1.88 & 1.90 & 1.93 & 2.01 & 2.16 & 2.18 \\
+2.30 & 2.30 & 2.41 & 2.44 & 2.57 & 2.61 & 2.62 & 2.72 & 2.76 & 2.84 \\
+2.96 & 2.98 & 3.19 & 3.25 & 3.31 & +1.19 & +3.50 & +3.50 & +3.50 & +3.50 \\ \hline
+\end{tabular}
+\end{table}
+	
+\section{Software e pacotes utilizados}
+	As simulações foram realizadas no software RStudio utilizando a linguagem R com os seguintes pacotes: \textit{alabama} que usa a função \textit{contrsOptim.nl} realizarmos a otimização da \textit{f*} e \textit{MASS} para utilizarmos a normal multivariada no MCMC.
+	
+\section{Teoria utilizada}
+	
+\subsection{FBST: Teste de significância completamente Bayesiano}	
+	
+	Um FBST equivale a um teste de significância ou de determinação de p-valores na estatística frequentista, cujo objetivo é testar hipóteses precisas baseadas no cálculo de uma probabilidade posteriori (probabilidade condicional). É um teste Bayesiano que consiste na análise de conjuntos verossímeis, implementado à partir de otimizações numéricas e técnicas de integração, possuindo também caracterização geométrica.
+
+Considera-se uma região $\Theta$ que representa o espaço de parâmetros, a subvariedade  (subconjunto de uma variedade, que é uma generalização da ideia de uma superfície) $\Theta_0$ do espaço de parâmetros que define a hipótese nula e uma função densidade a posteriori $f$. Para verificarmos a hipótese que queremos, a resolução é feita em duas etapas:
+    
+\begin{enumerate}
+\item Encontrar o valor de $\theta^* = (\alpha^*, \beta^*, \gamma^*)$, um vetor de parâmetros que maximiza a posteriori  e $ f^* = f(\theta^*)$, que é o valor máximo obtido;
+	\item Integrar a função de densidade da posteriori a fim de encontrar $k^*$, que é a credibilidade de um conjunto $T^*$, o qual contém os pontos com densidade maior que $f^*$. Indica o grau de inconsistência entre a posteriori e a hipótese nula.
+\end{enumerate}
+
+	A evidência da hipótese nula, ou e-valor, é dada por: $Ev(H) = 1 - k^*$. Se o conjunto de hipóteses se localiza numa região com alta densidade, então a probabilidade do conjunto $T^*$ e $Ev(H)$ são pequenos, ou seja, a evidência contra a hipótese é fraca (está a seu favor). Por outro lado, se o conjunto estiver em uma região de baixa densidade, $T^*$ e $Ev(H)$ são grandes, o que significa forte evidência contra a hipótese.
+	
+\subsection{Integração por Monte Carlo com cadeias de Markov (MCMC)}
+	  Como estudado no EP anterior, métodos de Monte Carlo são aqueles que usam números aleatórios para a realização dos experimentos. Neste caso, usaremos para a resolução da integral o Método de Monte Carlo com cadeias de Markov, uma classe de algoritmos usada para simular distribuição multivariadas complexas. 
+      
+Uma cadeia de Markov é uma sequência de variáveis aleatórias onde os conjuntos de valores possíveis são chamados de espaço de estados. Refere-se a um caso particular de processo estocástico com estados discretos, onde os estados futuros são independentes dos estados anteriores desde que o estado presente seja conhecido, ou seja, cada estado depende ligeiramente do seu anterior. As regras da mudança de um estado para outro em cada período são regidas por um kernel de transição, que é um mecanismo que descreve a probabilidade de um estado alternar para outro como base no atual. 
+
+A ideia central de MCMC é obter uma amostra da distribuição posteriori e calcular estimativas amostrais com as características da distribuição de interesse.
+	
+\subsection{Algoritmo de Metropolis-Hastings}
+	
+	O algoritmo de Metropolis-Hasting é um exemplo de MCMC. Este algoritmo produz uma cadeia de Markov na qual um valor é gerado de uma distribuição auxiliar e aceito com uma dada probabilidade. Para a realização do algoritmo de Metropolis-Hastings, suponha que a  cadeia esteja no estado $x_{i}$ e que $x_{i + 1} = x_{i} + \epsilon_{i}$ é gerado através da distribuição do núcleo. A escolha do próximo valor da amostra é realizada a partir dos seguintes passos:
+
+\begin{enumerate}
+\item Especifique o vetor inicial $x_{i}$;
+\item Gere um vetor $prop_{i}$ da distribuição do núcleo;
+\item Verificar se o vetor gerado está em $\Theta$;
+\item Calcule a probabilidade de aceitação $\alpha(prop_{i}, x_{i})$ e gere um valor $u_{i}$ da distribuição Uniforme[0, 1], com
+
+\ $$R(prop_{i}, x_{i}) = \frac{g(prop_{i})}{g(x_{i})}$$
+\ $$\alpha(prop_{i}, x_{i}) = min(1 , R(prop_{i}, x_{i}))$$
+
+\item Se $u_{i} \leq \alpha(prop_{i}, x_{i})$, então aceite o novo valor $x_{i} = x_{i} + prop_{i}$, caso contrário, $x_{i} = x_{i}$, ou seja
+
+\ $$x_{i} = \left\{ \begin{array}{ll}
+x_{i} + prop_{i} & \mbox{ se } u_{i} \leq \alpha \\
+x_{i} & \mbox{ se } u_{i} > \alpha \end{array} \right.\ $$
+
+\item Volte ao passo 2.
+\end{enumerate}
+
+\ Assim, com esse procedimento, a amostra de $X$ pode ser obtido. No entanto, uma questão importante de ordem prática é como os valores iniciais influenciam o comportamento da cadeia. É importante que, conforme o número de iterações aumenta, a cadeia esquece gradualmente os valores iniciais e eventualmente converge para uma distribuição de equilíbrio. Com isso, em termos práticos, é comum gerar várias amostras de $X$ e selecionar sempre o último valor delas para compor a amostra final da variável $X$.
+
+É importante atentar-se quanto a eficiência do algoritmo. Se a taxa de aceitação é muito alta, a cadeia pode não se mover muito ao redor do espaço de parâmetros de forma rápida e eficiente; já se a taxa é muito baixa, o algoritmo pode ser ineficiente por rejeitar muitos dos candidatos gerados.
+
+	
+\section{Resultados}
+	
+	 Foi utilizado no EP para o cálculo de $f^*$ (máximo valor da função de verossimilhança da Weibull) o algoritmo de otimização denominado para equações com restrições não lineares. Para o cálculo do mesmo utilizou-se pacote alabama do Rstudio.
+     
+     Para $f(\alpha,\beta,\gamma|D) = L(\theta) = L(\alpha,\beta,\gamma|D)=\prod^n_{i=1}w(t_{i}|\alpha,\beta,\gamma) \prod^m_{j=1}r(t_{j}|\alpha,\beta,\gamma)$ onde a densidade da Weibull truncada é dada por:$w(t|\alpha, \beta, \gamma) = \frac{\beta(t + \alpha)^{\beta - 1}}{\gamma^{\beta}} e^{\frac{-((t + \alpha)/\gamma)^{\beta}}{r(\alpha|\beta, \gamma)}}$ e a função de risco da Weibull truncada é dada por: $r(t|\alpha, \beta, \gamma) = e^{\frac{-((t + \alpha)/\gamma)^{\beta}}{r(\alpha|\beta, \gamma)}}$ Como o pacote alabama serve apenas para minimizar a função objetivo, e no caso queria  maximizar, logo eu tomei $(-1)*{L(\alpha,\beta,\gamma|D)}$ Com isso obtido os valores de $\alpha$, $\beta$ e $\gamma$ encontrados foram respectivamente: 0.849, 3.001 e 3.167. Os valores encontram-se no intervalo dado, onde $\alpha >0$, $\beta[3,4]$ e $\gamma\geq 0$. Com o uso desses valores  calculou-se a média da Weibull, e  com o uso deste o valor do desgaste empírico $\rho = 0,3$. 
+
+Para o cálculo do $k^*$ utilizou-se o algoritmo de MCMC Metrópolis-Hastings.  Para o cálculo do algoritmo determinaram-se vetores iniciais, que estão dentro das restrições, com a escolha de $\alpha = \alpha^*$, $\beta = \beta^*$ e $\gamma = \gamma^*$. Com o MCMC com núcleo da normal multivariada (trivariada), pois tem uma função de densidade mais fácil de se encontrar uma amostra através do comando \textit{mvrnorm}, com a matriz de covariância sendo a matriz identidade. Foram utilizados Vários tamanhos de amostras foram escolhidas, ficando ao final com 10000, descartando os 4000 primeiros elementos, tendo um tempo de execução satisfatório com o resultado.
+
+Ao final da simulação obteve-se um vetores de valores de $L(\alpha, \beta, \gamma)$, que foi calculado utilizando a proporções do conjunto $T^*$ ou seja o numero de elementos que satisfazem esta condição $(\theta \in \Theta | L(\theta) \le L(\theta^*))$ , obtendo o valor da integral $k^*= 0,018$. Com o uso desse testou-se a hipótese $H_0$, obtendo se um e-valor de 0,982, sendo este muito satisfatório.
+	
+\section{Conclusão}
+	
+	Com um e-valor de 0,982 conclui-se que a hipótese nula não pode ser descartada, e portanto $\rho=0,3$ é um valor coerente para a medida do desgaste dos LEDS.
+\\\indent O uso do teste de significância completamente bayesiano, com a utilização do cálculo da maximização através do uso de algoritmo de otimização e cálculo da integração com o uso de Monte Carlo e do algoritmo de Metropolis-Hastings se mostraram muito eficientes.
+
+\begin{thebibliography}{refs} % referências
+	
+\bibitem{MCMC with R}
+        CHRISTIAN,C.; CASELA, G. ,Intorducing Monte Carlo Methods with R (2009).
+        \textit{Disponível em:}
+        \url{http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.703.5878&rep=rep1&type=pdf}.
+        \textbf {acesso em 02/06/2018.}
+
+\bibitem{MC book}
+		GENTLE, J.E. Statistics and Computuing. Random Number Generation and Monte Carlo Methods.$1^{st}$ edition. Fairfax. Springer. (1998). 247p.
+        
+\bibitem{FBST} 
+		GUSTAVO G. B.; MARCELO S.L.; JULIO M.S. The Full Bayesian Significance Test for Symmetry in Contingency Tables(2000);
+        \textit{Disponível em:}.
+        \url{http://www.lss.supelec.fr/MaxEnt2010/paper/038}
+        \textbf {acesso em 09/06/2018.}
+        
+\bibitem{FBST LED}
+		IRONY, T.Z.; LAURETTO, M.; PEREIRA, C.A.B. \& STERN, J.M. A Weibull Wearout Test: Full Bayesian Approach.
+		\textbf{Disponível em:} 				 	 			
+    	\url{http://www.ime.usp.br/\~cpereira/publications/weib1.pdf} 
+		\textbf{acesso em 09/06/2018.}
+
+\bibitem{for MCMC}
+        STERN, J.M.,Cognitive Constructivism and the Epistemic Significance of Sharp Statistical Hypotheses in Natural Sciences(2010).
+        \textit{Disponível em:}
+        \url{https://www.ime.usp.br/~jstern/books/evli.pdf}.
+        \textbf {acesso em 27/05/2018.}
+        
+\bibitem{Notas de aula}
+        Notas de Aula do professor J. Stern - MAP2212 - Maio/Junho de 2018     
+        
+\end{thebibliography}
+	
+\end{document}
+	
+	
+
+
+	
