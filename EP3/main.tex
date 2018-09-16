@@ -1,0 +1,151 @@
+%Nome: Guilherme Navarro
+%Número USP: 8943160
+%Turma: Noturna
+%Curso: Laboratório de Computação e Simulação
+
+\documentclass{article} %documento do tipo artigo
+\usepackage[brazilian]{babel} %gera datas e nomes como capítulo, bibliografia em português com estilo brasileiro
+\usepackage[utf8]{inputenc} %os acentos são digitados diretamente pelo teclado
+\usepackage{bbold} %permite escrever os símbolos dos conjuntos
+\usepackage{listings}
+\usepackage{url}
+
+
+\begin{document} %início do documento
+
+\title{EP3 - Integração por Monte Carlo} %título do documento
+\author{Guilherme Navarro - NºUSP: 8943160} %autor do documento
+\date{Abril de 2018} %data 
+
+\maketitle
+
+\section{Enunciado}
+
+\qquad O presente relatório tem como objetivo simular três formas distintas de integração pelo método de Monte Carlo {\it{importance sampling}}.  $\int_{0}^{\infty} f(x) \ dx$ em que $$f(x) = y^{c-1}e^{-y}$$ sendo $y = x + |sin(ax+b)|$, $a = 0.RG$, $b = 0.CPF$ e $c = 1.NUSP$. Neste caso, NUSP representa o número USP (7 dígitos) e CPF representa o número do CPF (11 dígitos), enquanto RG representa o número do RG (8 dígitos). Para tal, o cálculo da integral deve ser feito com um erro inferior a 0,5\% com n a amostra previamente definida, assim o erro é determinado por:
+$$ Erro = \frac{\sigma}{\sqrt[]{n}} $$
+\section{Constantes utilizadas na simulação}
+
+\qquad Para dar continuidade a simulação do método de integração {\it {importance sampling}}, serão considerados, neste relatório, os seguintes valores: 
+
+\begin{enumerate}
+\item $RG = 50057666 \Rightarrow a = 0,50057666$
+\item $CPF = 43396344847 \Rightarrow b = 0,43396344847$
+\item $NUSP = 8943160 \Rightarrow c = 1,8535791$ 
+
+\end{enumerate}
+
+\section{Importance Sampling}
+
+\qquad A simulação pelo método {\it{Importance Sampling}} consiste em encontrar uma função $g(x)$ que se comporte de maneira semelhante em relação à função $f(x)$. Assim, tem-se que:
+
+\ $$\theta = \int_{0}^{\infty} f(x) dx = \int_{0}^{\infty} \frac{f(x)}{g(x)} g(x) dx$$
+\ Logo para estimarmos a Integral $\theta$ é:
+\ $$ \hat{\theta} \approx \frac{1}{n} \sum_{i=1}^{n}  \frac{f(x_{i})}{g(x_{i})} g(x_{i})$$
+
+\ Onde $X_{1},X_{2},...,X{n}$ são amostras geradas pela distribuição de g(x).
+
+\subsection{Distribuição Qui-Quadrado}
+
+\qquad  Para o primeiro método utilizei um gerador aleatório com distribuição Qui-quadrado, logo pelo método do Importance Sampling, temos que $$g(x) = \frac{1}{2^\frac{\nu}{2}\Gamma(\frac{\nu}{2})}x^{\frac{\nu}{2}-1} e^{\frac{-x}{2}}$$ porém neste caso utilizei $\nu = 2$, ou seja 2 graus de liberdade, que fica muito próximo da distribuição gamma.
+
+\ Para 10 amostras aleatórias geradas de tamanho $n = 10000$, foram obtidos os seguintes resultados:
+
+\begin{table}[ht]
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Amostra & Estimativa & $\sigma$ & Erro \\
+\hline
+1 & 0.7402834 & 0.1870649 & 0.001870649\\
+2 & 0.7395690 & 0.1909798 & 0.001909798\\
+3 & 0.7394079 & 0.1913149 & 0.001913149\\
+4 & 0.7360132 & 0.1919221 & 0.001919221\\
+5 & 0.7410992 & 0.1860060 & 0.001860060\\
+6 & 0.7388761 & 0.1914131 & 0.001914131\\
+7 & 0.7371713 & 0.1908047 & 0.001908047\\
+8 & 0.7398101 & 0.1913737 & 0.001913737\\
+9 & 0.7401100 & 0.1892472 & 0.001892472\\
+10 & 0.7384239 & 0.1925994 & 0.001925994\\
+\hline
+\end{tabular}
+\end{center}
+\end{table}
+
+\ Observa-se que o valor aproximado para $\int_{0}^{\infty} f(x) \ dx$ para esse método é 0.73907 e a precisão utilizada é de 0,05\%.
+
+\subsection{Distribuição Exponencial}
+
+\qquad Para o segundo método utilizei um gerador aleatório com distribuição Exponencial, logo pelo método do Importance Sampling, temos que $$g(x) = \lambda e^{-\lambda x}$$ porém neste caso utilizei $\lambda = 1$, que é uma boa aproximação da distribuição gamma.
+
+\ Para 10 amostras aleatórias geradas de tamanho $n = 10000$, foram obtidos os seguintes resultados:
+
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Amostra & Estimativa & $\sigma$ & Erro \\
+\hline
+1 & 0.7392638 & 0.1870649 & 0.004359587\\
+2 & 0.7362537 & 0.1909798 & 0.004234159\\
+3 & 0.7414718 & 0.1913149 & 0.004299636\\
+4 & 0.7390269 & 0.1919221 & 0.004342252\\
+5 & 0.7448643 & 0.1860060 & 0.004425362\\
+6 & 0.7348974 & 0.1914131 & 0.004233377\\
+7 & 0.7404254 & 0.1908047 & 0.004396889\\
+8 & 0.7423693 & 0.1913737 & 0.004393020\\
+9 & 0.7368790 & 0.1892472 & 0.004275651\\
+10 & 0.7349573 & 0.1925994 & 0.004233768\\
+\hline
+\end{tabular}
+\end{center}
+
+\ Observa-se que o valor aproximado para $\int_{0}^{\infty} f(x) \ dx$ para esse método é  0.73904 e a precisão utilizada é de 0,05\%.
+
+\subsection{Distribuição Gamma}
+
+\qquad Para o terceiro método implementei um gerador aleatório com distribuição Gamma, logo pelo método do Importance Sampling, temos que $$g(x) = \frac{x^{c-1} e^{-x}}{\Gamma(c)}$$
+
+\ Para 10 amostras aleatórias geradas de tamanho $n = 10000$, foram obtidos os seguintes resultados:
+ 
+\begin{center}
+\begin{tabular}{llll}
+\hline
+Amostra & Estimativa & $\sigma$ & Erro \\
+\hline
+1 & 0.7367394 & 1.4182207 & 0.014182207\\
+2 & 0.7335030 & 0.4790546 & 0.004790546\\
+3 & 0.7410796 & 0.6375696 & 0.006375696\\
+4 & 0.7369746 & 0.4727243 & 0.004727243\\
+5 & 0.7363559 & 0.5111403 & 0.005111403\\
+6 & 0.7309480 & 0.5000902 & 0.005000902\\
+7 & 0.7351135 & 0.4779316 & 0.004779316\\
+8 & 0.7316098 & 0.6757312 & 0.006757312\\
+9 & 0.7331316 & 0.5696112 & 0.005696112\\
+10 & 0.7342952 & 0.4619952 & 0.004619952\\
+\hline
+\end{tabular}
+\end{center}
+
+\ Observa-se que o valor aproximado para $\int_{0}^{\infty} f(x) \ dx$ para esse método é  0.73497 e a precisão utilizada é de 0,05\%.
+
+\section{Conclusão}
+
+\qquad A partir dos erros dos métodos de integração calculados acima, é possível perceber que, em média, o método de Importance Sampling com a distruibuição gamma converge mais rápido, por precisa de uma amostra de tamanho menor para chegar no valor aproximado da integral.
+
+\begin{thebibliography}{refs} % referências
+\bibitem{Monte Carlo Methods}
+        LECTURE, Monte Carlo Methods I (2012).
+        \textit{Disponível em:}
+        \url{http://www.lce.hut.fi/teaching/S-114.1100/lect_9.pdf}.
+        \textbf {acesso em 20/04/2018.}
+        
+\bibitem{for LaTeX}
+        STERN, J.M.,Cognitive Constructivism and the Epistemic Significance of Sharp Statistical Hypotheses in Natural Sciences(2010).
+        \textit{Disponível em:}
+        \url{https://www.ime.usp.br/~jstern/books/evli.pdf}.
+        \textbf {acesso em 18/04/2018.}
+        
+\bibitem{Notas de aula}
+        Notas de Aula do professor J. Stern - MAP2212 - Abril 2018       
+\end{thebibliography}
+
+\end{document}
